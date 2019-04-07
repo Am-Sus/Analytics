@@ -1,0 +1,19 @@
+---
+title: "quiz10"
+author: "Barbara Asiedu"
+date: "13 March 2019"
+output: html_document
+---
+## mtcars Dataset
+
+```{r warning=FALSE, message=FALSE}
+library(ggplot2)
+```
+
+```{r mtcars, warning=FALSE, message=FALSE}
+ggplot(data = mtcars, aes(x=disp, y=hp))+
+  geom_point(color="firebrick")+
+  geom_smooth()+
+  labs(title = "Relationship between Horsepower and Displacement", x= "Displacement (cu.in)", y="Gross horsepower")
+```
+
