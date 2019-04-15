@@ -35,7 +35,7 @@ ages <- c(`04` = "0--4", `514` = "5--14", `014` = "0--14", `1524` = "15--24", `2
 clean$age <- factor(ages[str_sub(clean$column, 2)], levels = ages) #assign age to clean as factor using 2nd letter of column as cue
 
 #Billboard dataset----------------------------------------------------------------------------------
-library("lubridate")
+library("lubridate")#package for cleaning date data
 
 raw <- read.csv("billboard.csv")
 
@@ -54,24 +54,25 @@ raw <- raw[, c("year", "artist.inverted", "track", "time", "date.entered", "x1st
                "x68th.week", "x69th.week", "x70th.week", "x71st.week", "x72nd.week", "x73rd.week", 
                "x74th.week", "x75th.week", "x76th.week")]
 
-names(raw)[2] <- "artist"
+names(raw)[2] <- "artist"#namne column 2 "artist
 
 raw$artist <- iconv(raw$artist, "MAC", "ASCII//translit") #convert from "MAC" to "ASCII/translit" format
+
 raw$track <- str_replace(raw$track, " \\(.*?\\)", "") #replace these signs with second argument(nothing)
+
 names(raw)[-(1:5)] <- str_c("wk", 1:76) #except 1:5 name column wk 1:76
+
 raw <- arrange(raw, year, artist, track) #arrange raw by year, artist and track
 raw[1:10, 1:10]
 
 library(stringr)
-long_name <- nchar(raw$track) > 20
+long_name <- nchar(raw$track) > 20 #find characters more than 20 letters
 raw$track[long_name] <- paste0(substr(raw$track[long_name], 0, 20), "...")#if track namae is longer than 20 characters, extract 0-20 and if there are more letters, continue with ...
-
-xtable(raw[c(1:3, 6:10), 1:8], "billboard-raw.tex")
 
 clean <- melt(raw, id = 1:5, na.rm = TRUE) #convert to long format
 clean[1:10,]
 
-clean$week <- as.integer(str_replace_all(clean$variable, "[^0-9]+", "")) #replace column variable: with the argumant and return column as factor
+clean$week <- as.integer(str_replace_all(clean$variable, "[^0-9]+", "")) #replace column variable: with the argument and return column as factor
 clean$variable <- NULL #remove column variable 
 library(lubridate)
 
@@ -93,7 +94,7 @@ xtable(clean_out[1:15, ], "billboard-clean.tex")
 
 # Normalization --------------------------------------------------------------
 library(plyr)
-song <- unrowname(unique(clean[c("artist", "track", "time")]))
+song <- unrowname(unique(clean[c("artist", "track", "time")]))#remove 
 song[1:10,]
 song$id <- 1:nrow(song)
 
@@ -118,22 +119,9 @@ clean[1:10,]
 library("ggplot2")
 library("MASS")
 
-if (!file.exists("deaths.rds")) {
-  ## from https://github.com/hadley/mexico-mortality/raw/master/deaths/deaths08.csv.bz2
-  deaths <- read.csv("deaths08.csv.bz2")
-  unlink("deaths08.csv.bz2")
-  deaths$hod[deaths$hod == 99] <- NA
-  deaths$hod[deaths$hod == 24] <- 0
-  deaths$hod[deaths$hod == 0] <- NA
-  deaths$hod <- as.integer(deaths$hod)
-  deaths <- arrange(deaths, yod, mod, dod, hod, cod)
-  deaths <- deaths[c("yod", "mod", "dod", "hod", "cod")]  
-  saveRDS(deaths, "deaths.rds")}
-
 deaths <- readRDS("deaths.rds")
 
-ok <- subset(deaths, yod == 2008 & mod != 0 & dod != 0)
-xtable(ok[c(1, 1:14 * 2000), c("yod", "mod", "dod", "hod", "cod")], "raw.tex")
+ok <- subset(deaths, yod == 2008 & mod != 0 & dod != 0) # use "!" to mean "not"
 
 codes <- read.csv("icd-main.csv")
 codes$disease <- sapply(codes$disease, function(x) str_c(strwrap(x, width = 30), 
@@ -143,15 +131,19 @@ codes <- codes[!duplicated(codes$cod), ]
 
 # Display overall hourly deaths
 hod_all <- subset(count(deaths, "hod"), !is.na(hod))
-qplot(hod, freq, data = hod_all, geom = "line") + scale_y_continuous("Number of deaths", 
-                                                                     labels = function(x) format(x, big.mark = ",")) + xlab("Hour of day")
-ggsave("overall.pdf", width = 10, height = 6)
+
+#using ggplot
+qplot(hod, freq, data = hod_all, geom = "line") + 
+  scale_y_continuous("Number of deaths", 
+                     labels = function(x) format(x, big.mark = ",")) + 
+  xlab("Hour of day")
 
 # Count deaths per hour, per disease
 hod2 <- count(deaths, c("cod", "hod"))
 hod2 <- subset(hod2, !is.na(hod))
 hod2 <- join(hod2, codes)
-hod2 <- ddply(hod2, "cod", transform, prop = freq/sum(freq))
+hod2 <- ddply(hod2, "cod", transform, prop = freq/sum(freq)) #using dplyr 
+
 
 # Compare to overall abundance
 overall <- ddply(hod2, "hod", summarise, freq_all = sum(freq))
@@ -182,12 +174,18 @@ ylog10 <- scale_y_log10(breaks = 10^-c(3, 4, 5), labels = c("0.001", "0.0001", "
 
 qplot(n, dist, data = devi)
 ggsave("n-dist-raw.pdf", width = 6, height = 6)
-qplot(n, dist, data = devi) + geom_smooth(method = "rlm", se = FALSE) + xlog10 + ylog10
+qplot(n, dist, data = devi) + 
+  geom_smooth(method = "rlm", se = FALSE) + 
+  xlog10 + ylog10
+
 ggsave("n-dist-log.pdf", width = 6, height = 6)
 
 devi$resid <- resid(rlm(log(dist) ~ log(n), data = devi))
 coef(rlm(log(dist) ~ log(n), data = devi))
-ggplot(devi, aes(n, resid)) + geom_hline(yintercept = 1.5, colour = "grey50") + geom_point() + 
+
+ggplot(devi, aes(n, resid)) + 
+  geom_hline(yintercept = 1.5, colour = "grey50") + 
+  geom_point() + 
   xlog10
 ggsave("n-dist-resid.pdf", width = 6, height = 6)
 
@@ -196,8 +194,11 @@ hod_unusual_big <- match_df(hod2, subset(unusual, n > 350))
 hod_unusual_sml <- match_df(hod2, subset(unusual, n <= 350))
 
 # Visualize unusual causes of death
-ggplot(hod_unusual_big, aes(hod, prop)) + geom_line(aes(y = prop_all), data = overall, 
-                                                    colour = "grey50") + geom_line() + facet_wrap(~disease, ncol = 3)
+ggplot(hod_unusual_big, aes(hod, prop)) + 
+  geom_line(aes(y = prop_all), data = overall,
+            colour = "grey50") + geom_line() + 
+  facet_wrap(~disease, ncol = 3) #
+
 ggsave("unusual-big.pdf", width = 8, height = 6)
 last_plot() %+% hod_unusual_sml
 ggsave("unusual-sml.pdf", width = 8, height = 4) 

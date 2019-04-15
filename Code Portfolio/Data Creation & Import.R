@@ -112,7 +112,7 @@ names(Ozone) <- make.names(names(Ozone)) #### convert name format to x.x
 
 unique(Ozone$State.Name) #check unique observations of a variable
 
-#Littke manipulation
+#Little manipulation
 ranking <- group_by(Ozone, State.Name, County.Name) %>% #group_by to sort by specific column names
   summarise(Ozone= mean(Ozone$Observation.Count)) %>% #summarise by means
   as.data.frame() %>% #present result as dataframe
