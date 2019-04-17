@@ -1,0 +1,192 @@
+---
+title: "ANLY 506-Final Project"
+author: "Barbara Asiedu"
+date: "16 April 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+This paper presents an Exploratory Data Analysis of a gapminder dataset. The data includes names of countries, year, population, income and life expectancy by country.
+
+The paper seeks to explain whether life expectancy is influenced by income.
+*Do you live longer when you have more money?*
+
+### Load Data
+```{r }
+gapminder <- read.csv("gapminder.csv")
+
+```
+
+###Packages required
+```{r}
+library(dplyr); library(ggplot2); library(reshape2); library(doBy)
+```
+
+### Data Description
+In this section, a basic description and summary of the data done to allow readers understand the make-up of the data set.
+
+```{r echo=TRUE}
+nrow(gapminder)
+
+ncol(gapminder)
+```
+Summary statistics for the data with minimum, maximum, mean and median calculated for numeric variables.
+```{r echo=TRUE}
+summary(gapminder)
+```
+
+Cleaning of the data. 
+This involves removing  commas (",") in population values and 
+changing column names to lower keys.
+
+```{r echo=TRUE}
+#remove commas in population figure
+gapminder$population <- as.numeric(gsub(",","",gapminder$population))
+```
+
+```{r echo=TRUE}
+#change column names to same format
+names(gapminder)[1] <- "country"
+
+names(gapminder)[2] <- "year"
+```
+
+```{r echo=TRUE}
+x <- sum(is.na(gapminder))
+
+```
+
+There are `r x` rows of missing values however I decided to leave them all in and use a command to ignore them in analysis since they constitute about half the dataset.
+
+
+The following are the countries and corresponding regions of the world they are in. 
+
+```{r echo=TRUE}
+unique(gapminder$region)
+```
+There are 197 unique countries in the dataset which is about 10 short of number of sovereign states in the world.
+```{r echo=TRUE}
+country <- unique(gapminder$country)
+length(country)
+```
+
+## Exploratory Analysis
+Observation of the most recent year in the dataset is 2015. Income distribution in the year.
+
+```{r echo=TRUE, warning=FALSE, message=FALSE}
+#filter 2015
+gapminder2015 <- filter(gapminder, year == 2015)
+```
+
+A plot of income disbution for the year 2015 shows most people earned below 1000.
+```{r echo=TRUE, warning=FALSE, message=FALSE}
+# plot the distribution of income in 2015
+ggplot(gapminder2015, aes(income)) +
+  geom_histogram(bins = 50, fill="blue") + 
+  ggtitle("2015 Income Distribution across Countries") +
+  xlab("Income") + ylab("Count") +
+  theme_classic()
+
+```
+
+A boxplot broke down the distribution of the incomes. East Asia and North Africa has the widest spread and Sub=saharan Africa has the smallest spread and lowest median income.
+Europ and Central asia has the highest mean income followed by the Americas in the year 2015.
+
+```{r echo=TRUE, warning=FALSE, message=FALSE}
+ggplot(gapminder2015, aes(x=region, y=income))+
+  geom_boxplot(alpha=0.7)+
+  scale_y_continuous(name = "Income per Region") +
+  scale_x_discrete(name = "Region") +
+  ggtitle("Boxplot of Income by Region") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 14, family = "Tahoma", face = "bold"),
+        text = element_text(size = 12, family = "Tahoma"),
+        axis.title = element_text(face="bold"),
+        axis.text.x=element_text(size = 7),
+        legend.position = "bottom") +
+  scale_fill_brewer(palette = "Accent")
+```
+
+```{r echo=TRUE, warning=FALSE, message=FALSE}
+income.reg <- summaryBy(income ~ region, data = gapminder2015, FUN = mean)
+
+# plot the average  for each region, to show the inocme by region in 2015
+ggplot(income.reg, 
+       aes(x = region, y = income.mean, color = region)) +
+  geom_point(size=4) +
+  ggtitle("2015 income by Region") +
+  xlab("Region of the World") + ylab("Avg. Income per person") +
+  theme_classic()+
+  theme(plot.title = element_text(size = 14, family = "Tahoma", face = "bold"),
+        text = element_text(size = 12, family = "Tahoma"),
+        axis.title = element_text(face="bold"),
+        axis.text.x=element_text(size = 7)) +
+  scale_y_continuous(limits = c(5000, 40000), breaks=seq(5000,40000, 5000))
+
+```
+
+### Observation
+We observe from the plots above that income is mostly below 1000. A boxplot shows that the region with the highest income is Europe and Central Asia. Middle east and North Africa have the widest spread and Sub-Saharan Africa has the lowest income with some intereting outlieres.
+
+```{r echo=TRUE, warning=FALSE, message=FALSE}
+life.reg <- summaryBy(life ~ region, data = gapminder2015, FUN = mean)
+
+# plot the Life expectancy  for each region, to show the life expectancy by region in 2015
+ggplot(life.reg, 
+       aes(x = region, y = life.mean, color = region)) +
+  geom_point(size=4) +
+  ggtitle("2015 Life Expectancy by Region") +
+  xlab("Region of the World") + ylab("Life Expectancy per person") +
+  theme_classic()+
+  theme(plot.title = element_text(size = 14, family = "Tahoma", face = "bold"),
+        text = element_text(size = 12, family = "Tahoma"),
+        axis.title = element_text(face="bold"),
+        axis.text.x=element_text(size = 7)) +
+  scale_y_continuous(limits = c(60, 80), breaks=seq(60, 80, 10))
+
+```
+
+
+With both parameters, Africa has the lowest income and lowest life expectancy rate.
+Population has been on the increase however wwe notice and sharp rise in the population of South Asia from the 1940s which was the end of the World Wars. Middle East and North Africa has had almost no increase in the population
+
+```{r echo=TRUE, warning=FALSE, message=FALSE}
+ggplot(gapminder, 
+       aes(year, population, colour = region))  + 
+  geom_smooth()+
+  ggtitle("Population over Time by Continent") +
+  xlab("Year") + ylab("Avg. Population") +
+  theme_classic()+
+  theme(plot.title = element_text(size = 14, family = "Tahoma", face = "bold"),
+        text = element_text(size = 12, family = "Tahoma"),
+        axis.title = element_text(face="bold"),
+        axis.text.x=element_text(size = 7)) +
+  scale_x_continuous(limits = c(1800, 2015), breaks=seq(1800, 2015, 10))
+
+```
+
+However when we plot life expectancy, we observe a different trend. Life expectancy has been on the rise but with a global dip around 1930s which might also have been accounted for by the World wars.
+
+```{r echo=TRUE, warning=FALSE, message=FALSE}
+ggplot(gapminder, 
+       aes(year, life, colour = region)) + 
+  geom_smooth() + ggtitle("Life Expectation over Time by Region") +
+  xlab("Year") + ylab("Life Expectancy") +
+  theme_classic()+
+  theme(plot.title = element_text(size = 14, family = "Tahoma", face = "bold"),
+        text = element_text(size = 12, family = "Tahoma"),
+        axis.title = element_text(face="bold"),
+        axis.text.x=element_text(size = 7)) +
+  scale_x_continuous(limits = c(1800, 2015), breaks=seq(1800, 2015, 10))
+
+```
+
+## Final Observation
+North Africa and Middle East have the highest average income but come come second in life expectancy. Also East Asia and Pacific have higher income than the Americas but the Americas has a higher life expectancy.
+
+## Conclusion
+Life expectancy is not determined by income. Other factors might affect it but from this exploratory analysis, it shows that income does not make you live longer. 

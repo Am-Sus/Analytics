@@ -158,11 +158,6 @@ mutate(tail(subset(cods, freq > 100), 30), disease = str_sub(disease, 1, 30))
 hod3 <- subset(hod2, cod %in% c("I21", "N18", "E84", "B16") & hod >= 8 & hod <= 12)[1:15, 
                                                                                     c("hod", "cod", "disease", "freq", "prop", "freq_all", "prop_all")]
 
-xtable(hod3[c("hod", "cod", "freq")], "counts.tex")
-xtable(hod3[c("disease")], "counts-disease.tex")
-xtable(hod3[5], "counts-prop.tex")
-xtable(hod3[6:7], "counts-all.tex")
-
 devi <- ddply(hod2, "cod", summarise, n = sum(freq), dist = mean((prop - prop_all)^2))
 devi <- subset(devi, n > 50)
 
